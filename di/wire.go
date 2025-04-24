@@ -6,13 +6,19 @@ package di
 import (
 	"context"
 
-	"github.com/dev-rever/cryptoo-pricing/controller"
+	"github.com/dev-rever/cryptoo-pricing/internal/controller"
 	"github.com/dev-rever/cryptoo-pricing/internal/db"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
+	"github.com/dev-rever/cryptoo-pricing/internal/router"
 	"github.com/dev-rever/cryptoo-pricing/repository"
-	"github.com/dev-rever/cryptoo-pricing/router"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"github.com/jackc/pgx/v5"
+)
+
+var MiddlewareSet = wire.NewSet(
+	middleware.ProvideJWTMiddleware,
 )
 
 type Application struct {
@@ -25,6 +31,7 @@ func InitApplication(ctx context.Context) (*Application, error) {
 		db.ProvideDB,
 		repository.ProvideUserRepo,
 		controller.ProvideUserCtrl,
+		MiddlewareSet,
 		router.ProvideRouter,
 		wire.Struct(new(Application), "*"),
 	)

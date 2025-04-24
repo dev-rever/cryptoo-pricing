@@ -20,6 +20,12 @@ func (repo *UserRepo) CheckUserExists(ctx context.Context, account, email string
 	return exists, err
 }
 
+func (repo *UserRepo) QueryUserIDByAccount(ctx context.Context, account string) (userID int, err error) {
+	query := `SELECT id FROM users WHERE account = $1`
+	err = repo.db.QueryRow(ctx, query, account).Scan(&userID)
+	return userID, err
+}
+
 func (repo *UserRepo) CreateUser(ctx context.Context, account, password, email string) (suc bool, err error) {
 	query := `
 		INSERT INTO users (account, pwd, email)

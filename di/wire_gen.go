@@ -8,11 +8,13 @@ package di
 
 import (
 	"context"
-	"github.com/dev-rever/cryptoo-pricing/controller"
+	"github.com/dev-rever/cryptoo-pricing/internal/controller"
 	"github.com/dev-rever/cryptoo-pricing/internal/db"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
+	"github.com/dev-rever/cryptoo-pricing/internal/router"
 	"github.com/dev-rever/cryptoo-pricing/repository"
-	"github.com/dev-rever/cryptoo-pricing/router"
 	"github.com/gin-gonic/gin"
+	"github.com/google/wire"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -25,7 +27,8 @@ func InitApplication(ctx context.Context) (*Application, error) {
 	}
 	userRepo := repository.ProvideUserRepo(conn)
 	userController := controller.ProvideUserCtrl(userRepo)
-	engine := router.ProvideRouter(userController)
+	handlerFunc := middleware.ProvideJWTMiddleware()
+	engine := router.ProvideRouter(userController, handlerFunc)
 	application := &Application{
 		Router: engine,
 		DB:     conn,
@@ -34,6 +37,8 @@ func InitApplication(ctx context.Context) (*Application, error) {
 }
 
 // wire.go:
+
+var MiddlewareSet = wire.NewSet(middleware.ProvideJWTMiddleware)
 
 type Application struct {
 	Router *gin.Engine

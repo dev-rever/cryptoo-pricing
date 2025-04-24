@@ -4,6 +4,7 @@ const (
 	SuccessCode     = 0
 	ParserErrorCode = 1
 	DBErrorCode     = 2
+	AuthErrorCode   = 4
 	OtherErrorCode  = 99
 
 	Success = "success"

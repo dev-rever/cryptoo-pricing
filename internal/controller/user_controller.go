@@ -3,7 +3,8 @@ package controller
 import (
 	"net/http"
 
-	"github.com/dev-rever/cryptoo-pricing/model"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
+	"github.com/dev-rever/cryptoo-pricing/model/dto"
 	"github.com/dev-rever/cryptoo-pricing/repository"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -50,7 +51,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		l := Log(OtherErrorCode, "could not hash password")
-		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "something error"))
+		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "something error, please retry again"))
 		return
 	}
 
@@ -62,6 +63,30 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		return
 	}
 
+	id, err := uc.userRepo.QueryUserIDByAccount(ctx, req.Account)
+	if err != nil {
+		l := Log(DBErrorCode, "query user id error")
+		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "something error, please retry again"))
+		return
+	}
+
+	accToken, err := middleware.GenerateJWT(uint(id))
+	if err != nil {
+		l := Log(AuthErrorCode, "generate token failed")
+		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "generate token failed"))
+		return
+	}
+
+	payload := model.RegisterResponse{
+		Account: req.Account,
+		Email:   req.Email,
+		Token:   accToken,
+	}
 	l := Log(SuccessCode, "user registered successfully")
-	ctx.JSON(http.StatusCreated, ResponseOK(l.Msg, nil))
+	ctx.JSON(http.StatusCreated, ResponseOK(l.Msg, payload))
+}
+
+func (uc *UserController) Profile(ctx *gin.Context) {
+	msg := "this page will return user profile"
+	ctx.JSON(http.StatusOK, msg)
 }
