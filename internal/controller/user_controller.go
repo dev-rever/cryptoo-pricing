@@ -1,13 +1,13 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
-	"github.com/dev-rever/cryptoo-pricing/model/dto"
+	model "github.com/dev-rever/cryptoo-pricing/model/dto"
 	"github.com/dev-rever/cryptoo-pricing/repository"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 
 	. "github.com/dev-rever/cryptoo-pricing/utils"
 )
@@ -29,51 +29,45 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	var req model.RegisterRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		l := Log(ParserErrorCode, err.Error())
-		ctx.JSON(http.StatusBadRequest, ResponseError(l.Code, l.Msg))
+		LogError(err)
+		ctx.JSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
 	// check if the user exists
 	exists, err := uc.userRepo.CheckUserExists(ctx, req.Account, req.Email)
 	if err != nil {
-		l := Log(DBErrorCode, "database error")
-		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, l.Msg))
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, "database error"))
 		return
 	}
 	if exists {
-		l := Log(DBErrorCode, "account or email already exists")
-		ctx.JSON(http.StatusConflict, ResponseError(l.Code, l.Msg))
+		err := errors.New("account or email already exists")
+		LogError(err)
+		ctx.JSON(http.StatusConflict, ResponseError(DBConflictErrorCode, err.Error()))
 		return
 	}
 
 	// hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	hashedPassword, err := HashPassword(req.Password)
 	if err != nil {
-		l := Log(OtherErrorCode, "could not hash password")
-		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "something error, please retry again"))
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
 	// store user to db
-	_, err = uc.userRepo.CreateUser(ctx, req.Account, string(hashedPassword), req.Email)
+	id, err := uc.userRepo.InsertUser(ctx, req.Account, string(hashedPassword), req.Email)
 	if err != nil {
-		l := Log(DBErrorCode, "could not create user")
-		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, l.Msg))
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
 		return
 	}
 
-	id, err := uc.userRepo.QueryUserIDByAccount(ctx, req.Account)
+	accToken, err := middleware.GenerateJWT(id)
 	if err != nil {
-		l := Log(DBErrorCode, "query user id error")
-		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "something error, please retry again"))
-		return
-	}
-
-	accToken, err := middleware.GenerateJWT(uint(id))
-	if err != nil {
-		l := Log(AuthErrorCode, "generate token failed")
-		ctx.JSON(http.StatusInternalServerError, ResponseError(l.Code, "generate token failed"))
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
@@ -82,11 +76,73 @@ func (uc *UserController) Register(ctx *gin.Context) {
 		Email:   req.Email,
 		Token:   accToken,
 	}
-	l := Log(SuccessCode, "user registered successfully")
-	ctx.JSON(http.StatusCreated, ResponseOK(l.Msg, payload))
+
+	msg := "user registered successfully"
+	LogSuc(msg)
+	ctx.JSON(http.StatusCreated, ResponseOK(msg, &payload))
+}
+
+func (uc *UserController) Login(ctx *gin.Context) {
+	var req model.LoginRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		LogError(err)
+		ctx.JSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
+		return
+	}
+
+	dbPwd, err := uc.userRepo.QueryUserPwdByAccount(ctx, req.Account)
+	if err != nil {
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		return
+	}
+
+	id, err := uc.userRepo.QueryUserIDByAccount(ctx, req.Account)
+	if err != nil {
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		return
+	}
+
+	accToken, err := middleware.GenerateJWT(id)
+	if err != nil {
+		LogError(err)
+		ctx.JSON(http.StatusInternalServerError, ResponseError(AuthorizedErrorCode, err.Error()))
+		return
+	}
+
+	if err := ComparePassword(dbPwd, req.Password); err != nil {
+		LogError(err)
+		ctx.JSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
+		return
+	}
+
+	payload := model.LoginResponse{
+		Token: accToken,
+	}
+	msg := "user login successfully"
+	LogSuc(msg)
+	ctx.JSON(http.StatusOK, ResponseOK(msg, &payload))
 }
 
 func (uc *UserController) Profile(ctx *gin.Context) {
-	msg := "this page will return user profile"
-	ctx.JSON(http.StatusOK, msg)
+	if uidRaw, exist := ctx.Get("uid"); !exist {
+		err := errors.New("unauthorized")
+		LogError(err)
+		ctx.JSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
+		return
+	} else {
+		uid := uidRaw.(uint)
+		payload, err := uc.userRepo.QueryUserByID(ctx, uid)
+		if err != nil {
+			LogError(err)
+			ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+			return
+		}
+
+		msg := "get user profile successfully"
+		LogSuc(msg)
+		ctx.JSON(http.StatusOK, ResponseOK(msg, &payload))
+	}
 }

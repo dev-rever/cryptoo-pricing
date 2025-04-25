@@ -22,7 +22,7 @@ func ProvideJWTMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthErrorCode, "Missing or invalid Authorization header"))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, "Missing or invalid Authorization header"))
 			return
 		}
 
@@ -31,7 +31,7 @@ func ProvideJWTMiddleware() gin.HandlerFunc {
 			return jwtSecret, nil
 		})
 		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthErrorCode, "Invalid token"))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, "Invalid token"))
 			return
 		}
 

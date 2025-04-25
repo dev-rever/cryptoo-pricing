@@ -1,14 +1,30 @@
 package utils
 
-const (
-	SuccessCode     = 0
-	ParserErrorCode = 1
-	DBErrorCode     = 2
-	AuthErrorCode   = 4
-	OtherErrorCode  = 99
+import (
+	"log"
+	"strings"
+)
 
-	Success = "success"
-	Error   = "error"
+const (
+	ANSI_Reset  = "\033[0m"
+	ANSI_Black  = "\033[30m"
+	ANSI_Red    = "\033[31m"
+	ANSI_Green  = "\033[32m"
+	ANSI_Yellow = "\033[33m"
+	ANSI_Blue   = "\033[34m"
+	ANSI_Purple = "\033[35m"
+	ANSI_Cyan   = "\033[36m"
+	ANSI_White  = "\033[37m"
+
+	SuccessCode         = 0
+	InternalErrorCode   = 1
+	DBErrorCode         = 2
+	DBConflictErrorCode = 4
+	AuthorizedErrorCode = 8
+	UnknownErrorCode    = 99
+
+	SuccessText = "success"
+	ErrorText   = "error"
 )
 
 type APIResponse struct {
@@ -35,23 +51,26 @@ func ResponseError(code int, errMsg string) APIResponse {
 	}
 }
 
-// Response template
-// func RT(code int, msg any, obj any) (m map[string]any) {
-// 	m = map[string]any{
-// 		"code": code,
-// 	}
-// 	switch code {
-// 	case ResponseSuccessCode:
-// 		if msg != nil {
-// 			m["message"] = msg
-// 		} else {
-// 			m["message"] = "Success"
-// 		}
-// 	case ResponseFailed:
-// 		m["error"] = msg
-// 	}
-// 	if obj != nil {
-// 		m["data"] = obj
-// 	}
-// 	return
-// }
+func LogSuc(msg string) {
+	var sb strings.Builder
+	sb.WriteString(ANSI_Green)
+	sb.WriteString(msg)
+	sb.WriteString(ANSI_Reset)
+	log.Println(sb.String())
+}
+
+func LogInfo(msg string) {
+	var sb strings.Builder
+	sb.WriteString(ANSI_Yellow)
+	sb.WriteString(msg)
+	sb.WriteString(ANSI_Reset)
+	log.Println(sb.String())
+}
+
+func LogError(e error) {
+	var sb strings.Builder
+	sb.WriteString(ANSI_Red)
+	sb.WriteString(e.Error())
+	sb.WriteString(ANSI_Reset)
+	log.Println(sb.String())
+}

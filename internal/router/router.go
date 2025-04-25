@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	root     = "/"
+	root = "/"
+	// user
 	register = "/user/register"
+	login    = "user/login"
 	profile  = "/user/profile"
 )
 
@@ -22,6 +24,7 @@ func ProvideRouter(userController *controller.UserController, jwt gin.HandlerFun
 
 	// POST
 	router.POST(register, userController.Register)
+	router.POST(login, userController.Login)
 
 	return router
 }

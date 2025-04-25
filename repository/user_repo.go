@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/dev-rever/cryptoo-pricing/model"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -20,20 +21,29 @@ func (repo *UserRepo) CheckUserExists(ctx context.Context, account, email string
 	return exists, err
 }
 
-func (repo *UserRepo) QueryUserIDByAccount(ctx context.Context, account string) (userID int, err error) {
+func (repo *UserRepo) QueryUserIDByAccount(ctx context.Context, account string) (uid uint, err error) {
 	query := `SELECT id FROM users WHERE account = $1`
-	err = repo.db.QueryRow(ctx, query, account).Scan(&userID)
-	return userID, err
+	err = repo.db.QueryRow(ctx, query, account).Scan(&uid)
+	return uid, err
 }
 
-func (repo *UserRepo) CreateUser(ctx context.Context, account, password, email string) (suc bool, err error) {
-	query := `
-		INSERT INTO users (account, pwd, email)
-		VALUES ($1, $2, $3)
-	`
-	_, err = repo.db.Exec(ctx, query, account, password, email)
+func (repo *UserRepo) QueryUserPwdByAccount(ctx context.Context, account string) (pwd string, err error) {
+	query := `SELECT pwd FROM users WHERE account = $1`
+	err = repo.db.QueryRow(ctx, query, account).Scan(&pwd)
+	return pwd, err
+}
+
+func (repo *UserRepo) InsertUser(ctx context.Context, account, password, email string) (uid uint, err error) {
+	query := `INSERT INTO users (account, pwd, email) VALUES ($1, $2, $3) RETURNING id`
+	err = repo.db.QueryRow(ctx, query, account, password, email).Scan(&uid)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
-	return true, nil
+	return uid, nil
+}
+
+func (repo *UserRepo) QueryUserByID(ctx context.Context, uid uint) (user model.UserInfo, err error) {
+	query := `SELECT * FROM users WHERE id = $1`
+	err = repo.db.QueryRow(ctx, query, uid).Scan(&user.ID, &user.Account, &user.Password, &user.Email)
+	return user, err
 }
