@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware/jwt"
 	model "github.com/dev-rever/cryptoo-pricing/model/dto"
 	"github.com/dev-rever/cryptoo-pricing/repository"
 	"github.com/gin-gonic/gin"
@@ -30,7 +30,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
@@ -38,13 +38,13 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	exists, err := uc.userRepo.CheckUserExists(ctx, req.Account, req.Email)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, "database error"))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, "database error"))
 		return
 	}
 	if exists {
 		err := errors.New("account or email already exists")
 		LogError(err)
-		ctx.JSON(http.StatusConflict, ResponseError(DBConflictErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusConflict, ResponseError(DBConflictErrorCode, err.Error()))
 		return
 	}
 
@@ -52,7 +52,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	hashedPassword, err := HashPassword(req.Password)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
@@ -60,14 +60,14 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	id, err := uc.userRepo.InsertUser(ctx, req.Account, string(hashedPassword), req.Email)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
 		return
 	}
 
-	accToken, err := middleware.GenerateJWT(id)
+	accToken, err := jwt.GenerateJWT(id)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
@@ -87,34 +87,34 @@ func (uc *UserController) Login(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
 		return
 	}
 
 	dbPwd, err := uc.userRepo.QueryUserPwdByAccount(ctx, req.Account)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
 		return
 	}
 
 	id, err := uc.userRepo.QueryUserIDByAccount(ctx, req.Account)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
 		return
 	}
 
-	accToken, err := middleware.GenerateJWT(id)
+	accToken, err := jwt.GenerateJWT(id)
 	if err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusInternalServerError, ResponseError(AuthorizedErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(AuthorizedErrorCode, err.Error()))
 		return
 	}
 
 	if err := ComparePassword(dbPwd, req.Password); err != nil {
 		LogError(err)
-		ctx.JSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
 		return
 	}
 
@@ -130,14 +130,14 @@ func (uc *UserController) Profile(ctx *gin.Context) {
 	if uidRaw, exist := ctx.Get("uid"); !exist {
 		err := errors.New("unauthorized")
 		LogError(err)
-		ctx.JSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
 		return
 	} else {
 		uid := uidRaw.(uint)
 		payload, err := uc.userRepo.QueryUserByID(ctx, uid)
 		if err != nil {
 			LogError(err)
-			ctx.JSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
 			return
 		}
 

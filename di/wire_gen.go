@@ -10,7 +10,8 @@ import (
 	"context"
 	"github.com/dev-rever/cryptoo-pricing/internal/controller"
 	"github.com/dev-rever/cryptoo-pricing/internal/db"
-	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware/jwt"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware/redisutil"
 	"github.com/dev-rever/cryptoo-pricing/internal/router"
 	"github.com/dev-rever/cryptoo-pricing/repository"
 	"github.com/gin-gonic/gin"
@@ -27,8 +28,9 @@ func InitApplication(ctx context.Context) (*Application, error) {
 	}
 	userRepo := repository.ProvideUserRepo(conn)
 	userController := controller.ProvideUserCtrl(userRepo)
-	handlerFunc := middleware.ProvideJWTMiddleware()
-	engine := router.ProvideRouter(userController, handlerFunc)
+	mRedis := redisutil.ProvideRedis()
+	handlerFunc := jwt.ProvideJWTMiddleware()
+	engine := router.ProvideRouter(userController, mRedis, handlerFunc)
 	application := &Application{
 		Router: engine,
 		DB:     conn,
@@ -38,7 +40,7 @@ func InitApplication(ctx context.Context) (*Application, error) {
 
 // wire.go:
 
-var MiddlewareSet = wire.NewSet(middleware.ProvideJWTMiddleware)
+var MiddlewareSet = wire.NewSet(jwt.ProvideJWTMiddleware, redisutil.ProvideRedis)
 
 type Application struct {
 	Router *gin.Engine

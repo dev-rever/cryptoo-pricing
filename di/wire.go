@@ -8,7 +8,8 @@ import (
 
 	"github.com/dev-rever/cryptoo-pricing/internal/controller"
 	"github.com/dev-rever/cryptoo-pricing/internal/db"
-	"github.com/dev-rever/cryptoo-pricing/internal/middleware"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware/jwt"
+	"github.com/dev-rever/cryptoo-pricing/internal/middleware/redisutil"
 	"github.com/dev-rever/cryptoo-pricing/internal/router"
 	"github.com/dev-rever/cryptoo-pricing/repository"
 
@@ -18,7 +19,8 @@ import (
 )
 
 var MiddlewareSet = wire.NewSet(
-	middleware.ProvideJWTMiddleware,
+	jwt.ProvideJWTMiddleware,
+	redisutil.ProvideRedis,
 )
 
 type Application struct {
