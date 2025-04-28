@@ -27,7 +27,7 @@ services:
       - db
       - redis
     ports:
-      - "8080:8080"
+      - "80:8080"
     environment:
         - ENVIRONMENT=docker
         - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PROT}/${POSTGRES_DB}?sslmode=disable
