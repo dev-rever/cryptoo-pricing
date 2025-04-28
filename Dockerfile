@@ -3,12 +3,14 @@ FROM golang:1.24.2 AS builder
 
 WORKDIR /source
 
+ENV GOOS=linux
+ENV GOARCH=amd64
+ENV CGO_ENABLED=0
+
 COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
-
-ENV CGO_ENABLED=0 GOOS=linux GOARCH=arm64
 
 # 編譯出來的 binary 叫 cryptoo-pricing
 RUN go build -o cryptoo-pricing ./cmd
