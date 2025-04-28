@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 
+	"github.com/dev-rever/cryptoo-pricing/config"
 	. "github.com/dev-rever/cryptoo-pricing/utils"
 )
 
@@ -18,7 +19,7 @@ type MRedis struct {
 
 func ProvideRedis() *MRedis {
 	opt := redis.Options{
-		Addr: "localhost:6379",
+		Addr: config.GetRedisAddr(),
 	}
 	red := redis.NewClient(&opt)
 	return &MRedis{cli: red}

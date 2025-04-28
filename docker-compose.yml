@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./init-sql:/docker-entrypoint-initdb.d
+
+  redis:
+    image: redis:7
+    container_name: cryptoo_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  app:
+    image: cryptoo-pricing
+    container_name: cryptoo_app
+    restart: always
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+        - ENVIRONMENT=docker
+        - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:${POSTGRES_PROT}/${POSTGRES_DB}?sslmode=disable
+        - REDIS_ADDR=redis:6379
+    volumes:
+      - ./config/.env:/app/config/.env
+
+volumes:
+  db_data:
