@@ -1,33 +1,32 @@
-package controller
+package controllers
 
 import (
 	"errors"
 	"net/http"
 
 	"github.com/dev-rever/cryptoo-pricing/internal/middleware/jwt"
-	model "github.com/dev-rever/cryptoo-pricing/model/dto"
-	"github.com/dev-rever/cryptoo-pricing/repository"
+	"github.com/dev-rever/cryptoo-pricing/repositories"
 	"github.com/gin-gonic/gin"
 
+	model "github.com/dev-rever/cryptoo-pricing/model/dto"
 	. "github.com/dev-rever/cryptoo-pricing/utils"
 )
 
-type UserController struct {
-	userRepo *repository.UserRepo
+type User struct {
+	userRepo *repositories.User
 }
 
-func ProvideUserCtrl(repo *repository.UserRepo) *UserController {
-	return &UserController{userRepo: repo}
+func ProvideUserCtrl(repo *repositories.User) *User {
+	return &User{userRepo: repo}
 }
 
-func (uc *UserController) Root(ctx *gin.Context) {
+func (u *User) Root(ctx *gin.Context) {
 	msg := "this is root page"
 	ctx.JSON(http.StatusOK, msg)
 }
 
-func (uc *UserController) Register(ctx *gin.Context) {
+func (u *User) Register(ctx *gin.Context) {
 	var req model.RegisterRequest
-
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		LogError(err)
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
@@ -35,7 +34,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	}
 
 	// check if the user exists
-	exists, err := uc.userRepo.CheckUserExists(ctx, req.Account, req.Email)
+	exists, err := u.userRepo.CheckUserExists(ctx, req.Account, req.Email)
 	if err != nil {
 		LogError(err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, "database error"))
@@ -57,7 +56,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	}
 
 	// store user to db
-	id, err := uc.userRepo.InsertUser(ctx, req.Account, string(hashedPassword), req.Email)
+	id, err := u.userRepo.InsertUser(ctx, req.Account, string(hashedPassword), req.Email)
 	if err != nil {
 		LogError(err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
@@ -82,7 +81,7 @@ func (uc *UserController) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, ResponseOK(msg, &payload))
 }
 
-func (uc *UserController) Login(ctx *gin.Context) {
+func (u *User) Login(ctx *gin.Context) {
 	var req model.LoginRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -91,14 +90,14 @@ func (uc *UserController) Login(ctx *gin.Context) {
 		return
 	}
 
-	dbPwd, err := uc.userRepo.QueryUserPwdByAccount(ctx, req.Account)
+	dbPwd, err := u.userRepo.QueryUserPwdByAccount(ctx, req.Account)
 	if err != nil {
 		LogError(err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
 		return
 	}
 
-	id, err := uc.userRepo.QueryUserIDByAccount(ctx, req.Account)
+	id, err := u.userRepo.QueryUserIDByAccount(ctx, req.Account)
 	if err != nil {
 		LogError(err)
 		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
@@ -126,7 +125,7 @@ func (uc *UserController) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, ResponseOK(msg, &payload))
 }
 
-func (uc *UserController) Profile(ctx *gin.Context) {
+func (u *User) Profile(ctx *gin.Context) {
 	if uidRaw, exist := ctx.Get("uid"); !exist {
 		err := errors.New("unauthorized")
 		LogError(err)
@@ -134,7 +133,7 @@ func (uc *UserController) Profile(ctx *gin.Context) {
 		return
 	} else {
 		uid := uidRaw.(uint)
-		payload, err := uc.userRepo.QueryUserByID(ctx, uid)
+		payload, err := u.userRepo.QueryUserByID(ctx, uid)
 		if err != nil {
 			LogError(err)
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))

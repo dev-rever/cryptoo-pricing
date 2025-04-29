@@ -1,4 +1,4 @@
-package redisutil
+package mredis
 
 import (
 	"context"
@@ -13,25 +13,25 @@ import (
 	. "github.com/dev-rever/cryptoo-pricing/utils"
 )
 
-type MRedis struct {
-	cli *redis.Client
+type Wrap struct {
+	redis *redis.Client
 }
 
-func ProvideRedis() *MRedis {
+func ProvideMRedis() *Wrap {
 	opt := redis.Options{
 		Addr: config.GetRedisAddr(),
 	}
 	red := redis.NewClient(&opt)
-	return &MRedis{cli: red}
+	return &Wrap{redis: red}
 }
 
-func (rd *MRedis) RateLimitMiddleware(maxAttempts int, window time.Duration) gin.HandlerFunc {
+func (w *Wrap) RateLimitMiddleware(maxAttempts int, window time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := context.Background()
 		ip := c.ClientIP()
 		key := "login_attempts:" + ip
 
-		count, err := rd.cli.Incr(ctx, key).Result()
+		count, err := w.redis.Incr(ctx, key).Result()
 		if err != nil {
 			LogError(err)
 			c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
@@ -39,7 +39,7 @@ func (rd *MRedis) RateLimitMiddleware(maxAttempts int, window time.Duration) gin
 		}
 
 		if count == 1 {
-			rd.cli.Expire(ctx, key, window)
+			w.redis.Expire(ctx, key, window)
 		}
 
 		if count > int64(maxAttempts) {

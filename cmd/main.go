@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/dev-rever/cryptoo-pricing/config"
 	"github.com/dev-rever/cryptoo-pricing/di"
@@ -14,9 +13,7 @@ func main() {
 	validator.InitValidators()
 
 	app, _ := di.InitApplication(context.Background())
-	defer app.DB.Close(context.Background())
+	app.Router.Init()
 
-	if err := app.Router.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
-	}
+	defer app.DB.Close(context.Background())
 }

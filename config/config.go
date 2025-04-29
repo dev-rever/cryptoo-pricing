@@ -42,7 +42,7 @@ func GetDBUrl() (url string) {
 	envMode := getEnvMode()
 	if envMode == DockerMode {
 		url = os.Getenv("DATABASE_URL")
-	} else if envMode == LocalMode {
+	} else {
 		url = fmt.Sprintf(
 			"postgres://%s:%s@%s:%s/%s",
 			os.Getenv("POSTGRES_USER"),
@@ -51,8 +51,6 @@ func GetDBUrl() (url string) {
 			os.Getenv("POSTGRES_PROT"),
 			os.Getenv("POSTGRES_DB"),
 		)
-	} else {
-		log.Fatalln("Env DATABASE_URL invalid")
 	}
 	return
 }
@@ -61,10 +59,8 @@ func GetRedisAddr() (addr string) {
 	envMode := getEnvMode()
 	if envMode == DockerMode {
 		addr = os.Getenv("REDIS_ADDR")
-	} else if envMode == LocalMode {
-		addr = "localhost:6379"
 	} else {
-		log.Fatalln("Env Redis address invalid")
+		addr = "localhost:6379"
 	}
 	return
 }
