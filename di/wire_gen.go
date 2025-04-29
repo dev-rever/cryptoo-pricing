@@ -27,9 +27,11 @@ func InitApplication(ctx context.Context) (*Application, error) {
 	}
 	user := repositories.ProvideUserRepo(conn)
 	controllersUser := controllers.ProvideUserCtrl(user)
+	cryptoRepo := repositories.ProvideCryptoRepo()
+	crypto := controllers.ProvideCryptoCtrl(cryptoRepo)
 	wrap := mredis.ProvideMRedis()
 	handlerFunc := jwt.ProvideJWTMiddleware()
-	engine := router.ProvideRouter(controllersUser, wrap, handlerFunc)
+	engine := router.ProvideRouter(controllersUser, crypto, wrap, handlerFunc)
 	application := &Application{
 		Router: engine,
 		DB:     conn,
@@ -40,6 +42,10 @@ func InitApplication(ctx context.Context) (*Application, error) {
 // wire.go:
 
 var MiddlewareSet = wire.NewSet(jwt.ProvideJWTMiddleware, mredis.ProvideMRedis)
+
+var controllerSet = wire.NewSet(controllers.ProvideUserCtrl, controllers.ProvideCryptoCtrl)
+
+var repositorySet = wire.NewSet(repositories.ProvideUserRepo, repositories.ProvideCryptoRepo)
 
 type Application struct {
 	Router *router.Engine

@@ -10,42 +10,37 @@ import (
 )
 
 type Engine struct {
-	gin      *gin.Engine
-	mredis   *mredis.Wrap
-	jwt      func(*gin.Context)
-	userCtrl *controllers.User
+	gin        *gin.Engine
+	mredis     *mredis.Wrap
+	jwt        func(*gin.Context)
+	userCtrl   *controllers.User
+	cryptoCtrl *controllers.Crypto
 }
 
 const (
 	root = "/"
+
 	// user
 	userRegister = "/user/register"
 	userLogin    = "user/login"
 	userProfile  = "/user/profile"
+
+	// crypto
+	cryptoQueries = "crypto/queries"
 )
 
-// func ProvideRouter(userController *controllers.User, mredis *mredis.Wrap, jwt gin.HandlerFunc) *gin.Engine {
-// 	router := gin.Default()
-
-// 	authRouter := router.Group("", jwt)
-
-// 	// GET
-// 	router.GET(root, userController.Root)
-// 	authRouter.GET(userProfile, userController.Profile)
-
-// 	// POST
-// 	router.POST(userRegister, userController.Register)
-// 	router.POST(userLogin, mredis.RateLimitMiddleware(5, time.Minute), userController.Login)
-
-// 	return router
-// }
-
-func ProvideRouter(userCtrl *controllers.User, mredis *mredis.Wrap, jwt gin.HandlerFunc) *Engine {
+func ProvideRouter(
+	userCtrl *controllers.User,
+	cryptoCtrl *controllers.Crypto,
+	mredis *mredis.Wrap,
+	jwt gin.HandlerFunc,
+) *Engine {
 	return &Engine{
-		gin:      gin.Default(),
-		mredis:   mredis,
-		jwt:      jwt,
-		userCtrl: userCtrl,
+		gin:        gin.Default(),
+		mredis:     mredis,
+		jwt:        jwt,
+		userCtrl:   userCtrl,
+		cryptoCtrl: cryptoCtrl,
 	}
 }
 
@@ -55,6 +50,7 @@ func (e *Engine) Init() {
 	// GET
 	e.gin.GET(root, e.userCtrl.Root)
 	je.GET(userProfile, e.userCtrl.Profile)
+	je.GET(cryptoQueries, e.cryptoCtrl.SearchQueries)
 
 	// POST
 	e.gin.POST(userRegister, e.userCtrl.Register)

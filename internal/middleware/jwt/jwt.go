@@ -8,10 +8,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
-	. "github.com/dev-rever/cryptoo-pricing/utils"
+	api "github.com/dev-rever/cryptoo-pricing/utils/apiutils"
 )
 
-var jwtSecret = []byte("your-secret-key")
+var jwtSecret = []byte("secret-key")
 
 type MClaims struct {
 	UID uint `json:"uid"`
@@ -19,10 +19,11 @@ type MClaims struct {
 }
 
 func ProvideJWTMiddleware() gin.HandlerFunc {
+
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, "Missing or invalid Authorization header"))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, api.ResponseError(api.AuthorizedErrorCode, "Missing or invalid Authorization header"))
 			return
 		}
 
@@ -31,7 +32,7 @@ func ProvideJWTMiddleware() gin.HandlerFunc {
 			return jwtSecret, nil
 		})
 		if err != nil || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, "Invalid token"))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, api.ResponseError(api.AuthorizedErrorCode, "Invalid token"))
 			return
 		}
 

@@ -1,4 +1,4 @@
-package utils
+package pwdutils
 
 import "golang.org/x/crypto/bcrypt"
 

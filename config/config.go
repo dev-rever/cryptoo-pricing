@@ -1,46 +1,49 @@
 package config
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"os"
 
+	logger "github.com/dev-rever/cryptoo-pricing/utils/logutils"
 	"github.com/joho/godotenv"
 )
 
+type path string
+type mode string
+
 const (
-	LocalMode  = "local"
-	DockerMode = "docker"
+	local  mode = "local"
+	docker mode = "docker"
 )
 
 const (
-	LocalEnvPath  = "./config/.env"
-	DockerEnvPath = "./.env"
+	localEnv  path = "./config/.env"
+	dockerEnv path = "./.env"
 )
-
-type EnvMode string
 
 func LoadEnv() {
-	envMode := getEnvMode()
-	envFilePath := LocalEnvPath
-
-	if envMode == DockerMode {
-		envFilePath = DockerEnvPath
+	var p path
+	if envMode() == docker {
+		p = dockerEnv
+	} else {
+		p = localEnv
 	}
 
-	if err := godotenv.Load(envFilePath); err != nil {
-		log.Println("No env file found at", envFilePath, ", relying on system environment variables")
+	if err := godotenv.Load(string(p)); err != nil {
+		logger.LogError(errors.New(fmt.Sprintf("No env file found at %v, relying on system environment variables", p)))
+		return
 	}
 }
 
-func getEnvMode() EnvMode {
-	mode := os.Getenv("ENVIRONMENT")
-	return EnvMode(mode)
+func envMode() mode {
+	env := os.Getenv("ENVIRONMENT")
+	return mode(env)
 }
 
 func GetDBUrl() (url string) {
-	envMode := getEnvMode()
-	if envMode == DockerMode {
+	envMode := envMode()
+	if envMode == docker {
 		url = os.Getenv("DATABASE_URL")
 	} else {
 		url = fmt.Sprintf(
@@ -56,8 +59,8 @@ func GetDBUrl() (url string) {
 }
 
 func GetRedisAddr() (addr string) {
-	envMode := getEnvMode()
-	if envMode == DockerMode {
+	envMode := envMode()
+	if envMode == docker {
 		addr = os.Getenv("REDIS_ADDR")
 	} else {
 		addr = "localhost:6379"

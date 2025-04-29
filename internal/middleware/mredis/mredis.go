@@ -10,7 +10,8 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/dev-rever/cryptoo-pricing/config"
-	. "github.com/dev-rever/cryptoo-pricing/utils"
+	api "github.com/dev-rever/cryptoo-pricing/utils/apiutils"
+	logger "github.com/dev-rever/cryptoo-pricing/utils/logutils"
 )
 
 type Wrap struct {
@@ -18,6 +19,7 @@ type Wrap struct {
 }
 
 func ProvideMRedis() *Wrap {
+
 	opt := redis.Options{
 		Addr: config.GetRedisAddr(),
 	}
@@ -33,8 +35,8 @@ func (w *Wrap) RateLimitMiddleware(maxAttempts int, window time.Duration) gin.Ha
 
 		count, err := w.redis.Incr(ctx, key).Result()
 		if err != nil {
-			LogError(err)
-			c.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
+			logger.LogError(err)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.InternalErrorCode, err.Error()))
 			return
 		}
 
@@ -44,8 +46,8 @@ func (w *Wrap) RateLimitMiddleware(maxAttempts int, window time.Duration) gin.Ha
 
 		if count > int64(maxAttempts) {
 			err := errors.New("too many requests")
-			LogError(err)
-			c.AbortWithStatusJSON(http.StatusTooManyRequests, ResponseError(UnknownErrorCode, err.Error()))
+			logger.LogError(err)
+			c.AbortWithStatusJSON(http.StatusTooManyRequests, api.ResponseError(api.InternalErrorCode, err.Error()))
 			return
 		}
 

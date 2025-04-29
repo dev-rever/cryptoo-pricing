@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/dev-rever/cryptoo-pricing/internal/middleware/jwt"
@@ -9,7 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	model "github.com/dev-rever/cryptoo-pricing/model/dto"
-	. "github.com/dev-rever/cryptoo-pricing/utils"
+	api "github.com/dev-rever/cryptoo-pricing/utils/apiutils"
+	logger "github.com/dev-rever/cryptoo-pricing/utils/logutils"
+	putils "github.com/dev-rever/cryptoo-pricing/utils/pwdutils"
 )
 
 type User struct {
@@ -28,45 +31,45 @@ func (u *User) Root(ctx *gin.Context) {
 func (u *User) Register(ctx *gin.Context) {
 	var req model.RegisterRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ResponseError(api.InternalErrorCode, err.Error()))
 		return
 	}
 
 	// check if the user exists
 	exists, err := u.userRepo.CheckUserExists(ctx, req.Account, req.Email)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, "database error"))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.DBErrorCode, "database error"))
 		return
 	}
 	if exists {
 		err := errors.New("account or email already exists")
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusConflict, ResponseError(DBConflictErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusConflict, api.ResponseError(api.DBConflictErrorCode, err.Error()))
 		return
 	}
 
 	// hash password
-	hashedPassword, err := HashPassword(req.Password)
+	hashedPassword, err := putils.HashPassword(req.Password)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.InternalErrorCode, err.Error()))
 		return
 	}
 
 	// store user to db
 	id, err := u.userRepo.InsertUser(ctx, req.Account, string(hashedPassword), req.Email)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.DBErrorCode, err.Error()))
 		return
 	}
 
 	accToken, err := jwt.GenerateJWT(id)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(InternalErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.InternalErrorCode, err.Error()))
 		return
 	}
 
@@ -77,43 +80,43 @@ func (u *User) Register(ctx *gin.Context) {
 	}
 
 	msg := "user registered successfully"
-	LogSuc(msg)
-	ctx.JSON(http.StatusCreated, ResponseOK(msg, &payload))
+	logger.LogSuccess(msg, fmt.Sprintf("\naccount: %s", req.Account), fmt.Sprintf("\nemail: %s", req.Email))
+	ctx.JSON(http.StatusCreated, api.ResponseOK(msg, &payload))
 }
 
 func (u *User) Login(ctx *gin.Context) {
 	var req model.LoginRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, ResponseError(InternalErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, api.ResponseError(api.InternalErrorCode, err.Error()))
 		return
 	}
 
 	dbPwd, err := u.userRepo.QueryUserPwdByAccount(ctx, req.Account)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.DBErrorCode, err.Error()))
 		return
 	}
 
 	id, err := u.userRepo.QueryUserIDByAccount(ctx, req.Account)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.DBErrorCode, err.Error()))
 		return
 	}
 
 	accToken, err := jwt.GenerateJWT(id)
 	if err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(AuthorizedErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.AuthorizedErrorCode, err.Error()))
 		return
 	}
 
-	if err := ComparePassword(dbPwd, req.Password); err != nil {
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
+	if err := putils.ComparePassword(dbPwd, req.Password); err != nil {
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, api.ResponseError(api.AuthorizedErrorCode, err.Error()))
 		return
 	}
 
@@ -121,27 +124,27 @@ func (u *User) Login(ctx *gin.Context) {
 		Token: accToken,
 	}
 	msg := "user login successfully"
-	LogSuc(msg)
-	ctx.JSON(http.StatusOK, ResponseOK(msg, &payload))
+	logger.LogSuccess(msg, fmt.Sprintf(" account: %s", req.Account))
+	ctx.JSON(http.StatusOK, api.ResponseOK(msg, &payload))
 }
 
 func (u *User) Profile(ctx *gin.Context) {
 	if uidRaw, exist := ctx.Get("uid"); !exist {
 		err := errors.New("unauthorized")
-		LogError(err)
-		ctx.AbortWithStatusJSON(http.StatusUnauthorized, ResponseError(AuthorizedErrorCode, err.Error()))
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, api.ResponseError(api.AuthorizedErrorCode, err.Error()))
 		return
 	} else {
 		uid := uidRaw.(uint)
 		payload, err := u.userRepo.QueryUserByID(ctx, uid)
 		if err != nil {
-			LogError(err)
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, ResponseError(DBErrorCode, err.Error()))
+			logger.LogError(err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.DBErrorCode, err.Error()))
 			return
 		}
 
 		msg := "get user profile successfully"
-		LogSuc(msg)
-		ctx.JSON(http.StatusOK, ResponseOK(msg, &payload))
+		logger.LogSuccess(msg, fmt.Sprintf("\naccount: %s", payload.Account), fmt.Sprintf("\nemail: %s", payload.Email))
+		ctx.JSON(http.StatusOK, api.ResponseOK(msg, &payload))
 	}
 }

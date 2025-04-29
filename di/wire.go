@@ -22,6 +22,16 @@ var MiddlewareSet = wire.NewSet(
 	mredis.ProvideMRedis,
 )
 
+var controllerSet = wire.NewSet(
+	controllers.ProvideUserCtrl,
+	controllers.ProvideCryptoCtrl,
+)
+
+var repositorySet = wire.NewSet(
+	repositories.ProvideUserRepo,
+	repositories.ProvideCryptoRepo,
+)
+
 type Application struct {
 	Router *router.Engine
 	DB     *pgx.Conn
@@ -30,8 +40,8 @@ type Application struct {
 func InitApplication(ctx context.Context) (*Application, error) {
 	wire.Build(
 		db.ProvideDB,
-		repositories.ProvideUserRepo,
-		controllers.ProvideUserCtrl,
+		repositorySet,
+		controllerSet,
 		MiddlewareSet,
 		router.ProvideRouter,
 		wire.Struct(new(Application), "*"),
