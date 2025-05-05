@@ -1,13 +1,18 @@
 package controllers
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/dev-rever/cryptoo-pricing/internal/middleware/jwt"
 	"github.com/dev-rever/cryptoo-pricing/repositories"
 	"github.com/gin-gonic/gin"
+	"github.com/yuin/goldmark"
 
 	model "github.com/dev-rever/cryptoo-pricing/model/dto"
 	api "github.com/dev-rever/cryptoo-pricing/utils/apiutils"
@@ -24,8 +29,36 @@ func ProvideUserCtrl(repo *repositories.User) *User {
 }
 
 func (u *User) Root(ctx *gin.Context) {
-	msg := "this is root page"
-	ctx.JSON(http.StatusOK, msg)
+	mdPath := filepath.Join("docs", "index.md")
+	mdBytes, err := os.ReadFile(mdPath)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "Failed to read markdown file")
+		return
+	}
+
+	var mdBuf bytes.Buffer
+	if err := goldmark.Convert(mdBytes, &mdBuf); err != nil {
+		ctx.String(http.StatusInternalServerError, "Failed to convert markdown")
+		return
+	}
+
+	tmplPath := filepath.Join("templates", "markdown.html")
+	tmpl, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "Failed to read template file")
+		return
+	}
+
+	var out bytes.Buffer
+	err = tmpl.Execute(&out, map[string]interface{}{
+		"Content": template.HTML(mdBuf.String()),
+	})
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "Failed to render template")
+		return
+	}
+
+	ctx.Data(http.StatusOK, "text/html; charset=utf-8", out.Bytes())
 }
 
 func (u *User) Register(ctx *gin.Context) {

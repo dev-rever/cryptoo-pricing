@@ -27,6 +27,7 @@ const (
 
 	// crypto
 	cryptoQueries = "crypto/queries"
+	cryptoPrice   = "crypto/price"
 )
 
 func ProvideRouter(
@@ -50,7 +51,8 @@ func (e *Engine) Init() {
 	// GET
 	e.gin.GET(root, e.userCtrl.Root)
 	je.GET(userProfile, e.userCtrl.Profile)
-	je.GET(cryptoQueries, e.cryptoCtrl.SearchQueries)
+	je.GET(cryptoQueries, e.cryptoCtrl.SearchCoin)
+	je.GET(cryptoPrice, e.cryptoCtrl.GetCryptoPriceByIDs)
 
 	// POST
 	e.gin.POST(userRegister, e.userCtrl.Register)

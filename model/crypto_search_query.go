@@ -1,11 +1,11 @@
 package model
 
 type CryptoSearchQueries struct {
-	Coins      []Coin        `json:"coins"`
-	Exchanges  []Exchange    `json:"exchanges"`
-	Icos       []interface{} `json:"icos"`
-	Categories []Category    `json:"categories"`
-	Nfts       []Nft         `json:"nfts"`
+	Coins      []Coin        `json:"coins,omitempty"`
+	Exchanges  []Exchange    `json:"exchanges,omitempty"`
+	Icos       []interface{} `json:"icos,omitempty"`
+	Categories []Category    `json:"categories,omitempty"`
+	Nfts       []Nft         `json:"nfts,omitempty"`
 }
 
 type Category struct {
@@ -18,7 +18,7 @@ type Coin struct {
 	Name          string `json:"name"`
 	APISymbol     string `json:"api_symbol"`
 	Symbol        string `json:"symbol"`
-	MarketCapRank int64  `json:"market_cap_rank"`
+	MarketCapRank int64  `json:"-"`
 	Thumb         string `json:"thumb"`
 	Large         string `json:"large"`
 }
