@@ -24,9 +24,11 @@ type Engine struct {
 }
 
 const (
-	root    = "/"
-	docs    = "/docs"
-	swagger = "/swagger.yaml"
+	root     = "/"
+	readmeEN = "/readme.en"
+	readmeZH = "/readme.zh"
+	docs     = "/docs"
+	swagger  = "/swagger.yaml"
 
 	// user
 	userRegister = "/user/register"
@@ -59,6 +61,8 @@ func (e *Engine) Init() {
 
 	// GET
 	e.gin.GET(root, home)
+	e.gin.GET(readmeEN, readmeLangEN)
+	e.gin.GET(readmeZH, readmeLangZH)
 	e.gin.GET(docs, apiDocs)
 	e.gin.GET(swagger, swaggerYaml)
 
@@ -76,7 +80,41 @@ func (e *Engine) Init() {
 }
 
 func home(ctx *gin.Context) {
-	mdPath := filepath.Join("docs", "index.md")
+	ctx.Redirect(http.StatusFound, readmeEN)
+}
+
+func readmeLangEN(ctx *gin.Context) {
+	readmeMD("README.md", ctx)
+}
+
+func readmeLangZH(ctx *gin.Context) {
+	readmeMD("README.zh.md", ctx)
+}
+
+func apiDocs(ctx *gin.Context) {
+	tmplPath := filepath.Join("templates", "swagger.html")
+	tmpl, err := template.ParseFiles(tmplPath)
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "Failed to read template file")
+		return
+	}
+
+	var out bytes.Buffer
+	err = tmpl.Execute(&out, map[string]interface{}{}) // 可塞參數
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "Failed to render template")
+		return
+	}
+
+	ctx.Data(http.StatusOK, "text/html; charset=utf-8", out.Bytes())
+}
+
+func swaggerYaml(ctx *gin.Context) {
+	ctx.File("docs/swagger.yaml")
+}
+
+func readmeMD(path string, ctx *gin.Context) {
+	mdPath := filepath.Join(path)
 	mdBytes, err := os.ReadFile(mdPath)
 	if err != nil {
 		ctx.String(http.StatusInternalServerError, "Failed to read markdown file")
@@ -106,26 +144,4 @@ func home(ctx *gin.Context) {
 	}
 
 	ctx.Data(http.StatusOK, "text/html; charset=utf-8", out.Bytes())
-}
-
-func apiDocs(ctx *gin.Context) {
-	tmplPath := filepath.Join("templates", "swagger.html")
-	tmpl, err := template.ParseFiles(tmplPath)
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, "Failed to read template file")
-		return
-	}
-
-	var out bytes.Buffer
-	err = tmpl.Execute(&out, map[string]interface{}{}) // 可塞參數
-	if err != nil {
-		ctx.String(http.StatusInternalServerError, "Failed to render template")
-		return
-	}
-
-	ctx.Data(http.StatusOK, "text/html; charset=utf-8", out.Bytes())
-}
-
-func swaggerYaml(ctx *gin.Context) {
-	ctx.File("docs/swagger.yaml")
 }

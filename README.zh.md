@@ -1,5 +1,7 @@
 # 歡迎來到 Cryptoo Pricing 首頁
 
+[English version](http://cryptoo-pricing.com/readme.en)
+
 ## 前言
 
 這是我第一個使用 Go 開發的專案，目的是練習後端架構設計、開發流程與部署操作。  

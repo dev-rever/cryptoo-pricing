@@ -1,5 +1,7 @@
 # Welcome to Cryptoo Pricing
 
+[繁體中文](http://cryptoo-pricing.com/readme.zh)
+
 ## Introduction
 
 This is my first backend project built with Go. It serves as a practice exercise for designing backend architecture, implementing core features, and handling production deployment.
