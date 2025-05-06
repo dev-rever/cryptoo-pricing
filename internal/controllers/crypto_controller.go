@@ -69,7 +69,15 @@ func (c *Crypto) SearchCoin(ctx *gin.Context) {
 }
 
 func (c *Crypto) SupportCurrencies(ctx *gin.Context) {
+	result, err := c.cryptoRepo.SupportedVsCurrencies()
+	if err != nil {
+		logger.LogError(err)
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, api.ResponseError(api.InternalErrorCode, err.Error()))
+		return
+	}
 
+	logger.LogAsJSON(result)
+	ctx.JSON(http.StatusOK, api.ResponseOK(api.SuccessText, result))
 }
 
 func (c *Crypto) GetCryptoPriceByIDs(ctx *gin.Context) {

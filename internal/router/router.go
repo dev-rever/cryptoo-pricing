@@ -21,13 +21,14 @@ const (
 	root = "/"
 
 	// user
-	userRegister = "/user/register"
+	userRegister = "user/register"
 	userLogin    = "user/login"
-	userProfile  = "/user/profile"
+	userProfile  = "user/profile"
 
 	// crypto
-	cryptoQueries = "crypto/queries"
-	cryptoPrice   = "crypto/price"
+	cryptoQueries       = "crypto/queries"
+	cryptoPrice         = "crypto/price"
+	cryptoSupCurrencies = "crypto/supcurrencies"
 )
 
 func ProvideRouter(
@@ -46,13 +47,14 @@ func ProvideRouter(
 }
 
 func (e *Engine) Init() {
-	je := e.gin.Group("", e.jwt)
+	jwt := e.gin.Group("", e.jwt)
 
 	// GET
-	e.gin.GET(root, e.userCtrl.Root)
-	je.GET(userProfile, e.userCtrl.Profile)
-	je.GET(cryptoQueries, e.cryptoCtrl.SearchCoin)
-	je.GET(cryptoPrice, e.cryptoCtrl.GetCryptoPriceByIDs)
+	e.gin.GET(root, e.userCtrl.Home)
+	jwt.GET(userProfile, e.userCtrl.Profile)
+	jwt.GET(cryptoQueries, e.cryptoCtrl.SearchCoin)
+	jwt.GET(cryptoSupCurrencies, e.cryptoCtrl.SupportCurrencies)
+	jwt.GET(cryptoPrice, e.cryptoCtrl.GetCryptoPriceByIDs)
 
 	// POST
 	e.gin.POST(userRegister, e.userCtrl.Register)

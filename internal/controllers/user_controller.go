@@ -28,7 +28,7 @@ func ProvideUserCtrl(repo *repositories.User) *User {
 	return &User{userRepo: repo}
 }
 
-func (u *User) Root(ctx *gin.Context) {
+func (u *User) Home(ctx *gin.Context) {
 	mdPath := filepath.Join("docs", "index.md")
 	mdBytes, err := os.ReadFile(mdPath)
 	if err != nil {
