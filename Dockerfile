@@ -21,7 +21,8 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 WORKDIR /app
 
 COPY --from=builder /source/cryptoo-pricing .
-
 COPY --from=builder /source/config/.env ./config/.env
+COPY --from=builder /source/docs/ ./docs
+COPY --from=builder /source/templates ./templates
 
 CMD ["./cryptoo-pricing"]
