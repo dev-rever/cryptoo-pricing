@@ -32,6 +32,6 @@
 ## 關於我
 
 - 📧 Email：rever.developer@gmail.com  
-- 🎂 Cake：[@rever-dev_rever](https://www.cake.me/rever-dev_rever)  
-- 💻 GitHub：[陳彥均 (Rever Chen)](https://github.com/dev-rever/cryptoo-pricing)  
+- 🎂 Cake：[陳彥均 (Rever Chen)](https://www.cake.me/rever-dev_rever)  
+- 💻 GitHub：[@dev-rever)](https://github.com/dev-rever/cryptoo-pricing)  
 - 📘 API 文件（Swagger）：[cryptoo-pricing.com/docs](http://cryptoo-pricing.com/docs)

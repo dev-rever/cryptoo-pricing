@@ -25,4 +25,7 @@ COPY --from=builder /source/config/.env ./config/.env
 COPY --from=builder /source/docs/ ./docs
 COPY --from=builder /source/templates ./templates
 
+COPY README.md ./README.md
+COPY README.zh.md ./README.zh.md
+
 CMD ["./cryptoo-pricing"]

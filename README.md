@@ -33,6 +33,6 @@ As this is a beginner-level project, there may be room for improvement. Any feed
 ## About Me
 
 - 📧 Email: rever.developer@gmail.com  
-- 🎂 Cake: [@rever-dev_rever](https://www.cake.me/rever-dev_rever)  
+- 🎂 Cake: [陳彥均 (Rever Chen)](https://www.cake.me/rever-dev_rever)  
 - 💻 GitHub: [@dev-rever](https://github.com/dev-rever/cryptoo-pricing)  
 - 📘 API Documentation (Swagger): [cryptoo-pricing.com/docs](http://cryptoo-pricing.com/docs)
