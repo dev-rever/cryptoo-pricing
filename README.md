@@ -1,30 +1,31 @@
-# Welcome to Cryptoo Pricing
+# Welcome to the Cryptoo Pricing Home Page
 
-[繁體中文](http://cryptoo-pricing.com/readme.zh)
+[中文版](http://cryptoo-pricing.com/readme.zh)
 
 ## Introduction
 
-This is my first backend project built with Go. It serves as a practice exercise for designing backend architecture, implementing core features, and handling production deployment.
+This is my first backend project built with Go, created to practice backend architecture design, development workflows, and deployment operations.  
+I used Docker Compose to ensure consistency and stability of the runtime environment, and integrated Nginx as a reverse proxy to simulate load balancing scenarios.  
+The system supports user registration and login, and implements JWT-based authentication. Cryptocurrency data is retrieved via the free public API provided by [CoinGecko](https://www.coingecko.com/).
 
-The system includes user registration and login, along with JWT-based authentication. Cryptocurrency data is retrieved using the free public API provided by [CoinGecko](https://www.coingecko.com/).
-
-As this is a beginner-level project, there may be room for improvement. Any feedback or suggestions are greatly appreciated — thank you!
+As this is a beginner-level project, there may be design flaws or areas for improvement — feedback and suggestions are always welcome. Thank you!
 
 ## Tech Stack
 
-### Server Infrastructure
+### Server Environment
 - AWS EC2
 - AWS Route 53
 
 ### Containerization
 - Docker
 - Docker Compose
+- Nginx Reverse Proxy (to simulate load balancing)
 
 ### Databases
 - **Relational Database**: PostgreSQL  
-- **Caching Layer**: Redis (used primarily for caching)
+- **Cache Storage**: Redis (primarily for caching)
 
-### Libraries & Tools
+### Core Libraries & Tools
 - Web Framework: [Gin](https://github.com/gin-gonic/gin)  
 - Dependency Injection: [Google Wire](https://github.com/google/wire)  
 - HTTP Client: [Resty](https://github.com/go-resty/resty)  
@@ -33,6 +34,6 @@ As this is a beginner-level project, there may be room for improvement. Any feed
 ## About Me
 
 - 📧 Email: rever.developer@gmail.com  
-- 🎂 Cake: [陳彥均 (Rever Chen)](https://www.cake.me/rever-dev_rever)  
+- 🎂 Cake: [Rever Chen (陳彥均)](https://www.cake.me/rever-dev_rever)  
 - 💻 GitHub: [@dev-rever](https://github.com/dev-rever/cryptoo-pricing)  
-- 📘 API Documentation (Swagger): [cryptoo-pricing.com/docs](http://cryptoo-pricing.com/docs)
+- 📘 API Docs (Swagger): [cryptoo-pricing.com/docs](http://cryptoo-pricing.com/docs)

@@ -2,6 +2,7 @@ package router
 
 import (
 	"bytes"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -74,8 +75,13 @@ func (e *Engine) Init() {
 	// POST
 	e.gin.POST(userRegister, e.userCtrl.Register)
 	e.gin.POST(userLogin, e.mredis.RateLimitMiddleware(5, time.Minute), e.userCtrl.Login)
-	if err := e.gin.Run(":8080"); err != nil {
-		log.Fatalf("failed to run server: %v", err)
+
+	if port := os.Getenv("PORT"); port == "" {
+		log.Fatalf("failed to run server, invalid PORT")
+	} else {
+		if err := e.gin.Run(fmt.Sprintf(":%s", port)); err != nil {
+			log.Fatalf("failed to run server: %v", err)
+		}
 	}
 }
 

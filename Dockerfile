@@ -1,4 +1,3 @@
-# 第一階段：Builder
 FROM golang:1.24.2 AS builder
 
 WORKDIR /source
