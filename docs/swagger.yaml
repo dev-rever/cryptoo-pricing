@@ -224,7 +224,7 @@ components:
         email:
           type: string
           format: email
-          example: exanple@email.com
+          example: example@email.com
 
     UserLoginRequest:
       type: object
